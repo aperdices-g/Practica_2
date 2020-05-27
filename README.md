@@ -10,4 +10,4 @@ Por una parte, tenemos:
 
 **Kidney_cleaning:** Donde podéis encontrar cómo se ha realizado la limpieza de dataset origen y cómo se ha obtenido el dataset utilizado en análisis.
 
-**Kidney_analysis:** Partiendo del dataset limpio en fase anterior, se realiza análisis de los datos.
+**Kidney_analysis:** Partiendo del dataset limpio en fase anterior, se realiza análisis de los datos (estudio inicial)
