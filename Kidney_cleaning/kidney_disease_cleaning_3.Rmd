@@ -1,0 +1,652 @@
+---
+title: "Práctica 2. Tipologia de Datos. Limpieza y Visualización_2"
+author: "Nuria García y Alicia Perdices"
+date: '`r format(Sys.Date(),"%e de %B, %Y")`'
+output:
+  html_document: 
+    toc: yes
+    number_sections: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(DMwR2)
+library(VIM)
+```
+
+#### **Inspección de Datos** 
+
+##### ***1.-Carga de datos***
+
+```{r}
+data<-read.csv2("C:/temp/kidney_disease.csv",sep=",")
+names<-colnames(data)
+#Variables cualitativas
+idQualitative <- which(names=="sg"| names=="al" | names=="su"| names=="rbc" | names=="pc" | names=="pcc" | names=="ba" | names=="htn" | names=="dm" | names=="cad"  | names=="appet" | names=="pe" | names=="ane"| names=="classification"  )
+
+idQuantitative <- which(names=="age"| names=="bp" | names=="bgr"| names=="bu" | names=="sc" | names=="sod" | names=="pot" | names=="hemo" | names=="pcv" | names=="wc"  | names=="rc")
+
+```
+
+##### ***2.Imputación de las variables numéricas con los tres vecinos más cercanos. ***
+
+En vez de sustituir los valores en blanco por la media de los valores del atributio en cuestión, vamos a hacer la imputación con los tres vecinos más cercanos.
+Además, teniendo en cuanta el rango posible y correcto de los valores de los atributos en personas sanas, reemplazaremos por la media aquellos valores compatibles con outliers.
+
+
+**Transformación de variables**
+
+  * **age**
+```{r}
+data$age<-as.character(data$age)#Conversion a caracter
+data$age<-as.numeric(gsub(",",".",data$age))#Se corrige posibles inconsistencias en el separador decimal y se tranforma en numeric.
+data$age<-as.integer(data$age)#Se transforma a entero
+#Comprobemos si hay nulos
+table(is.na(data$age))
+
+#Eliminamos nas del dataframe
+data_nonas_age<-data[!is.na(data$age),]
+#data_nonas_age$age
+
+#Reemplazamos 'nas' del dataframe por la media del atributo age.
+#Media de la columna age. A cada valor NA le asignamos la media de los valores de este atributo.
+media_age<-mean(data_nonas_age$age)
+
+data$age[is.na(data$age)]<-trunc(media_age)
+table(is.na(data$age))
+```
+  
+  * **bp**
+```{r}
+#Blood Pressure  
+#===============
+
+data$bp<-as.character(data$bp)#Conversion a caracter
+data$bp<-as.numeric(gsub(",",".",data$bp))#Se corrige posibles inconsistencias en el separador decimal y se tranforma en numeric.
+id_bp<-which(is.na(data$bp))
+data[id_bp,]$bp<-NA
+boxplot(data$bp,main='Blood Pressure')
+```
+
+  * **sg**
+  
+```{r}
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias <- data.frame(table(data$sg))
+moda <- frecuencias[which.max(frecuencias$Freq),1]
+
+data$sg[data$sg=='']<-moda
+```
+  
+  * **al**  
+ 
+```{r}
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias2 <- data.frame(table(data$al))
+moda2 <- frecuencias2[which.max(frecuencias2$Freq),1]
+
+data$al[data$al=='']<-moda2
+```
+ 
+ 
+* **su**
+
+```{r}
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias4 <- data.frame(table(data$rbc))
+moda4 <- frecuencias4[which.max(frecuencias4$Freq),1]
+
+data$rbc[data$rbc=='']<-moda4
+```
+
+ 
+* **pc**
+
+```{r}
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias5 <- data.frame(table(data$pc))
+moda5<- frecuencias5[which.max(frecuencias5$Freq),1]
+
+data$pc[data$pc=='']<-moda5
+```
+
+* **pcc**
+
+```{r}
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias6 <- data.frame(table(data$pcc))
+moda6<- frecuencias6[which.max(frecuencias6$Freq),1]
+
+data$pcc[data$pcc=='']<-moda6
+```
+
+* **ba**
+
+```{r}
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias7 <- data.frame(table(data$ba))
+moda7<- frecuencias7[which.max(frecuencias7$Freq),1]
+
+data$ba[data$ba=='']<-moda7
+```
+
+* **bgr**
+
+```{r}
+#Transformación a tipo numeric
+data$bgr<-as.character(data$bgr)#Conversion a caracter
+data$bgr<-as.numeric(gsub(",",".",data$bgr))#Se corrige posibles inconsistencias en el separador decimal y se tranforma en numeric.
+id_bgr<-which(is.na(data$bgr))
+data[id_bgr,]$bgr<-NA
+boxplot(data$bgr,main='Blood Glucose Random')
+```
+
+* **bu**
+
+```{r}
+#Transformación a tipo numeric
+data$bu<-as.character(data$bu)#Conversion a caracter
+data$bu<-as.numeric(gsub(",",".",data$bu))#Se corrige posibles inconsistencias en el separador decimal y se tranforma en numeric.
+id_bu<-which(is.na(data$bu)|data$bu>200)
+data[id_bu,]$bu<-NA
+boxplot(data$bu,main='Blood Urea')
+```
+
+* **sc**
+
+```{r}
+#Transformación a tipo numeric
+data$sc<-as.character(data$sc)#Conversion a caracter
+data$sc<-as.numeric(gsub(",",".",data$sc))#Se corrige posibles inconsistencias en el separador decimal y se tranforma en numeric.
+id_sc<-which(is.na(data$sc)|data$sc>10)#Reemplazarmos los valores de creatinina mayores que 10.
+data[id_sc,]$sc<-NA
+boxplot(data$sc,main='Serum Creatinine')
+```
+
+* **sod**
+
+```{r}
+#Transformación a tipo numeric
+data$sod<-as.character(data$sod)#Conversion a caracter
+data$sod<-as.numeric(gsub(",",".",data$sod))#Se corrige posibles inconsistencias en el separador decimal y se tranforma en numeric.
+id_sod<-which(is.na(data$sod)|data$sod<10)
+data[id_sod,]$sod<-NA
+boxplot(data$sod,main='Sodium')
+```
+
+* **pot**
+
+```{r}
+#Transformación a tipo numeric
+data$pot<-as.character(data$pot)#Conversion a caracter
+data$pot<-as.numeric(gsub(",",".",data$pot))#Se corrige posibles inconsistencias en el separador decimal y se tranforma en numeric.
+id_pot<-which(is.na(data$pot)|data$pot>10)
+data[id_pot,]$pot<-NA
+boxplot(data$pot,main='Potassium')
+```
+
+* **hemo**
+
+```{r}
+#Transformación a tipo numeric
+data$hemo<-as.character(data$hemo)#Conversion a caracter
+data$hemo<-as.numeric(gsub(",",".",data$hemo))#Se corrige posibles inconsistencias en el separador decimal y se tranforma en numeric.
+id_hemo<-which(is.na(data$hemo)|data$hemo<5)
+data[id_hemo,]$hemo<-NA
+boxplot(data$hemo,main='Hemoglobin')
+```
+
+* **pcv**
+
+```{r}
+#Transformación a tipo numeric
+data$pcv<-as.character(data$pcv)#Conversion a caracter
+data$pcv<-suppressWarnings(as.numeric(gsub(",",".",data$pcv)))#Se corrige posibles inconsistencias en el separador decimal y se tranforma en numeric.
+
+id_pcv<-which(is.na(data$pcv))
+data[id_pcv,]$pcv<-NA
+boxplot(data$pcv,main='Packed Cell Volume')
+```
+
+* **wc**
+
+```{r}
+#Transformación a tipo numeric
+data$wc<-as.character(data$wc)#Conversion a caracter
+data$wc<-suppressWarnings(as.numeric(gsub(",",".",data$wc)))#Se corrige posibles inconsistencias en el separador decimal y se tranforma en numeric.
+
+id_wc<-which(is.na(data$wc))
+data[id_wc,]$wc<-NA
+boxplot(data$wc,main='White Blood Cell')
+```
+
+* **rc**
+
+```{r}
+#Transformación a tipo numeric
+data$rc<-as.character(data$rc)#Conversion a caracter
+data$rc<-suppressWarnings(as.numeric(gsub(",",".",data$rc)))#Se corrige posibles inconsistencias en el separador decimal y se tranforma en numeric.
+
+id_rc<-which(is.na(data$rc))
+data[id_rc,]$rc<-NA
+boxplot(data$rc,main='Red Blood Cell Count')
+```
+
+* **htn**
+
+```{r}
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias8 <- data.frame(table(data$htn))
+moda8<- frecuencias8[which.max(frecuencias8$Freq),1]
+
+data$htn[data$htn=='']<-moda8
+table(data$htn)
+```
+
+* **dm**
+
+```{r}
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias9 <- data.frame(table(data$dm))
+moda9<- frecuencias9[which.max(frecuencias9$Freq),1]
+
+data$dm[(data$dm=='')]<-moda9
+#Corregimos las categorías "\tno", "\tyes", " yes" por las correctas
+data$dm[data$dm=="\tno"]<-'no'
+data$dm[data$dm=="\tyes"]<-'yes'
+data$dm[data$dm==" yes"]<-'yes'
+```
+
+* **cad**
+
+```{r}
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias10<- data.frame(table(data$cad))
+moda10<- frecuencias10[which.max(frecuencias10$Freq),1]
+#Corregimos las categorías "\tno", " yes" por las correctas
+data$cad[(data$cad=='')]<-moda10
+data$cad[data$cad=="\tno"]<-'no'
+data$cad[data$cad==" yes"]<-'yes'
+```
+
+* **appet**
+
+```{r}
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias11<- data.frame(table(data$appet))
+moda11<- frecuencias11[which.max(frecuencias11$Freq),1]
+
+data$appet[(data$appet=='')]<-moda11
+```
+
+
+* **pe**
+
+```{r}
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias12<- data.frame(table(data$pe))
+moda12<- frecuencias12[which.max(frecuencias12$Freq),1]
+
+data$pe[(data$pe=='')]<-moda12
+```
+
+* **ane**
+
+```{r}
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias13<- data.frame(table(data$ane))
+moda13<- frecuencias13[which.max(frecuencias13$Freq),1]
+
+data$ane[(data$ane=='')]<-moda13
+```
+
+* **classification**
+
+```{r}
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias14<- data.frame(table(data$classification))
+moda14<- frecuencias14[which.max(frecuencias14$Freq),1]
+
+data$classification[(data$classification=='')]<-moda14
+#Corregimos las categoría 'ckd\t' por la correcta.
+data$classification[(data$classification=='ckd\t')]<-'ckd'
+```
+
+Ademas, hemos tratado los valores extremos del siguiente modo:
+
+* Blood Pressure:Valores posibles en pacientes con hipertensión arterial. Los conservamos
+* Blood Glucose: Valores compatibles con pacientes diabéticos.Conservamos
+* Creatinine: Reemplazarmos los registros con una creatinina superior a 10 (pacientes con IRC en estadío 5, estando en diálisis, no suelen tener mas de 8-10 unidades)
+* Sodium:Reemplazarmos el valor 4.5 teniendo en cuenta que el rango normal de los valores de sodio son (135-145 unidades)
+* Potassium :Reemplazaremos 37,47 teniendo en cuenta que el rango normal de los valores de potasio son (3.4-5.5 unidades)
+* Hemoglobin: Reemplazamos. Valor no compatible.
+* White Blood Cell:valores compatibles con infección o incluso con enfermedad subyacente. Conservamos.
+* Red Blood Cell Count:Valor compatible con enfermedad (Hepaticas con Ferritina alta).Mantenemos.
+* Blood Urea: Reemplazamos a partir de 200. Valores >200 compatibles con IRC muy muy avanzada.
+
+**Imputamos las variables numéricas con los tres vecinos más cercanos.**
+
+```{r}
+#Imputación para la variable bp
+#("age","bp","bgr","bu","sc","sod","pot","hemo","pcv","wc","rc")
+#x<-data[,idQuantitative]
+#knnOutut<-kNN(x,variable=c('bp'),k=3,dist_var=c("age","bgr","bu","sc","sod","pot","hemo","pcv","wc","rc"))
+#knnOutut[knnOutut$bp_imp==TRUE,]
+#data[id_bp,]$bp<-knnOutut[knnOutut$bp_imp==TRUE,]$bp
+x<-data[,idQuantitative]#Datos numéricos del dataset
+
+#Imputación para todas las variables. Asignamos los valores al dataframe tras la imputación.
+knnOutut_total<-kNN(x,variable=c("age","bp","bgr","bu","sc","sod","pot","hemo","pcv","wc","rc"),k=3,dist_var=c("age","bp","bgr","bu","sc","sod","pot","hemo","pcv","wc","rc"))
+head(knnOutut_total)
+
+data[id_bp,]$bp<-knnOutut_total[knnOutut_total$bp_imp==TRUE,]$bp
+data[id_bgr,]$bgr<-knnOutut_total[knnOutut_total$bgr_imp==TRUE,]$bgr
+data[id_bu,]$bu<-knnOutut_total[knnOutut_total$bu_imp==TRUE,]$bu
+data[id_sc,]$sc<-knnOutut_total[knnOutut_total$sc_imp==TRUE,]$sc
+data[id_sod,]$sod<-knnOutut_total[knnOutut_total$sod_imp==TRUE,]$sod
+data[id_pot,]$pot<-knnOutut_total[knnOutut_total$pot_imp==TRUE,]$pot
+data[id_hemo,]$hemo<-knnOutut_total[knnOutut_total$hemo_imp==TRUE,]$hemo
+data[id_pcv,]$pcv<-knnOutut_total[knnOutut_total$pcv_imp==TRUE,]$pcv
+data[id_wc,]$wc<-knnOutut_total[knnOutut_total$wc_imp==TRUE,]$wc
+data[id_rc,]$rc<-knnOutut_total[knnOutut_total$rc_imp==TRUE,]$rc
+
+
+```
+
+Comprobemos que todos los valores perdidos han sido imputados:
+
+```{r}
+sum(is.na(data$bp))
+sum(is.na(data$bgr))
+sum(is.na(data$bu))
+sum(is.na(data$sc))
+sum(is.na(data$sod))
+sum(is.na(data$pot))
+sum(is.na(data$hemo))
+sum(is.na(data$pcv))
+sum(is.na(data$wc))
+sum(is.na(data$rc))
+
+```
+
+##### ***2.Imputación de las variables categóricas con la clase más frecuente. ***
+
+  * **sg**, se ha cargado como factor correctamente.Sin embargo hay 6 categorías y debería haber 5 (1.005,1.010,1.015,1.020,1.025).Realizamos las transformaciones necesarias. Sustituimos los valores vacíos por la categoría más frecuente.
+
+
+```{r}
+#Comprobamos las categorías
+unique(data$sg)# 6 Categorías
+sum(is.na(data$sg)) #No hay 'NA'
+table(data$sg)
+
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias <- data.frame(table(data$sg))
+moda <- frecuencias[which.max(frecuencias$Freq),1]
+
+data$sg[data$sg=='']<-moda
+table(data$sg)
+```
+
+  * **al**, se ha cargado correctamente como factor. Debería tener 6 niveles (0,1,2,3,4,5) , pero obtenemos en un inicio 7.
+  
+```{r}
+#Comprobamos las categorías
+unique(data$al)# 7 Categorías
+sum(is.na(data$al)) #No hay 'NA'
+table(data$al)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias2 <- data.frame(table(data$al))
+moda2 <- frecuencias2[which.max(frecuencias2$Freq),1]
+
+data$al[data$al=='']<-moda2
+table(data$al)
+```
+  
+* **su**, se ha cargado correctamente como factor. Debería tener 6 niveles (0,1,2,3,4,5) , pero obtenemos en un inicio 7.
+
+```{r}
+#Comprobamos las categorías
+unique(data$su)# 7 Categorías
+sum(is.na(data$su)) #No hay 'NA'
+table(data$su)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias3 <- data.frame(table(data$su))
+moda3 <- frecuencias3[which.max(frecuencias3$Freq),1]
+
+data$su[data$su=='']<-moda3
+table(data$su)
+```
+
+* **rbc**, se ha cargado correctamente como factor. Debería tener 2 niveles (normal,abnormal) , pero obtenemos en un inicio 3.
+
+```{r}
+#Comprobamos las categorías
+unique(data$rbc)# 3 Categorías
+sum(is.na(data$rbc)) #No hay 'NA'
+table(data$rbc)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias4 <- data.frame(table(data$rbc))
+moda4 <- frecuencias4[which.max(frecuencias4$Freq),1]
+
+data$rbc[data$rbc=='']<-moda4
+table(data$rbc)
+```
+
+* **pc**, se ha cargado correctamente como factor. Debería tener 2 niveles (normal,abnormal) , pero obtenemos en un inicio 3.
+
+```{r}
+#Comprobamos las categorías
+unique(data$pc)# 3 Categorías
+sum(is.na(data$pc)) #No hay 'NA'
+table(data$pc)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias5 <- data.frame(table(data$pc))
+moda5<- frecuencias5[which.max(frecuencias5$Freq),1]
+
+data$pc[data$pc=='']<-moda5
+table(data$pc)
+```
+
+* **pcc**, se ha cargado correctamente como factor. Debería tener 2 niveles  (present,notpresent)  , pero obtenemos en un inicio 3.
+
+```{r}
+#Comprobamos las categorías
+unique(data$pcc)# 3 Categorías
+sum(is.na(data$pcc)) #No hay 'NA'
+table(data$pcc)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias6 <- data.frame(table(data$pcc))
+moda6<- frecuencias6[which.max(frecuencias6$Freq),1]
+
+data$pcc[data$pcc=='']<-moda6
+table(data$pcc)
+```
+
+* **ba**, se ha cargado correctamente como factor. Debería tener 2 niveles  (present,notpresent)  , pero obtenemos en un inicio 3.
+
+```{r}
+#Comprobamos las categorías
+unique(data$ba)# 3 Categorías
+sum(is.na(data$ba)) #No hay 'NA'
+table(data$ba)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias7 <- data.frame(table(data$ba))
+moda7<- frecuencias7[which.max(frecuencias7$Freq),1]
+
+data$ba[data$ba=='']<-moda7
+table(data$ba)
+```
+
+* **htn**, se ha cargado correctamente como factor. Debería tener 2 niveles  (yes,no)  , pero obtenemos en un inicio 3.
+
+```{r}
+#Comprobamos las categorías
+unique(data$htn)# 3 Categorías
+sum(is.na(data$htn)) #No hay 'NA'
+table(data$htn)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias8 <- data.frame(table(data$htn))
+moda8<- frecuencias8[which.max(frecuencias8$Freq),1]
+
+data$htn[data$htn=='']<-moda8
+table(data$htn)
+```
+
+* **dm**, se ha cargado correctamente como factor. Debería tener 2 niveles  (yes,no)  , pero obtenemos en un inicio 5.
+
+```{r}
+#Comprobamos las categorías
+unique(data$dm)# 5 Categorías
+sum(is.na(data$dm)) #No hay 'NA'
+table(data$dm)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias9 <- data.frame(table(data$dm))
+moda9<- frecuencias9[which.max(frecuencias9$Freq),1]
+
+data$dm[(data$dm=='')]<-moda9
+data$dm[data$dm=="\tno"]<-'no'
+data$dm[data$dm=="\tyes"]<-'yes'
+data$dm[data$dm==" yes"]<-'yes'
+table(data$dm)
+```
+
+* **cad**, se ha cargado correctamente como factor. Debería tener 2 niveles  (yes,no)  , pero obtenemos en un inicio 4.
+
+```{r}
+#Comprobamos las categorías
+unique(data$cad)# 4 Categorías
+sum(is.na(data$cad)) #No hay 'NA'
+table(data$cad)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias10<- data.frame(table(data$cad))
+moda10<- frecuencias10[which.max(frecuencias10$Freq),1]
+
+data$cad[(data$cad=='')]<-moda10
+data$cad[data$cad=="\tno"]<-'no'
+data$cad[data$cad==" yes"]<-'yes'
+table(data$cad)
+```
+
+* **appet**, se ha cargado correctamente como factor. Debería tener 2 niveles  (good,poor)  , pero obtenemos en un inicio 3.
+
+```{r}
+#Comprobamos las categorías
+unique(data$appet)# 3 Categorías
+sum(is.na(data$appet)) #No hay 'NA'
+table(data$appet)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias11<- data.frame(table(data$appet))
+moda11<- frecuencias11[which.max(frecuencias11$Freq),1]
+
+data$appet[(data$appet=='')]<-moda11
+
+table(data$appet)
+```
+
+* **pe**, se ha cargado correctamente como factor. Debería tener 2 niveles  (yes,no)  , pero obtenemos en un inicio 3.
+
+```{r}
+#Comprobamos las categorías
+unique(data$pe)# 3 Categorías
+sum(is.na(data$pe)) #No hay 'NA'
+table(data$pe)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias12<- data.frame(table(data$pe))
+moda12<- frecuencias12[which.max(frecuencias12$Freq),1]
+
+data$pe[(data$pe=='')]<-moda12
+
+table(data$pe)
+```
+
+* **ane**, se ha cargado correctamente como factor. Debería tener 2 niveles  (yes,no)  , pero obtenemos en un inicio 3.
+
+```{r}
+#Comprobamos las categorías
+unique(data$ane)# 3 Categorías
+sum(is.na(data$ane)) #No hay 'NA'
+table(data$ane)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias13<- data.frame(table(data$ane))
+moda13<- frecuencias13[which.max(frecuencias13$Freq),1]
+
+data$ane[(data$ane=='')]<-moda13
+
+table(data$ane)
+```
+
+* **classification**, se ha cargado correctamente como factor. Debería tener 2 niveles  (ckd,notckd)  , pero obtenemos en un inicio 3.
+
+```{r}
+
+#Comprobamos las categorías
+unique(data$classification)# 3 Categorías
+sum(is.na(data$classification)) #No hay 'NA'
+table(data$classification)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias14<- data.frame(table(data$classification))
+moda14<- frecuencias14[which.max(frecuencias14$Freq),1]
+
+data$classification[(data$classification=='')]<-moda14
+data$classification[(data$classification=='ckd\t')]<-'ckd'
+table(data$classification)
+
+```
+
+
+Eliminamos las categorías no usadas de cada atributo y comprobemos si la estructura de los datos, es la adecuada después de la transformación:
+
+```{r}
+data<-droplevels.data.frame(data)
+str(data)
+
+```
+
+**Grabamos a un fichero externo. kidney_disease_clean_2**
+
+```{r}
+write.csv(data, file="kidney_disease_clean_3.csv", row.names = FALSE)
+```
+
