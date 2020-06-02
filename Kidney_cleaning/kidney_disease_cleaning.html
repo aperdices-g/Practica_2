@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
@@ -331,6 +330,7 @@ summary {
   border: none;
   display: inline-block;
   border-radius: 4px;
+  background-color: transparent;
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li {
@@ -364,7 +364,7 @@ summary {
 
 <h1 class="title toc-ignore">Práctica 2. Tipologia de Datos. Limpieza y Visualización</h1>
 <h4 class="author">Nuria García y Alicia Perdices</h4>
-<h4 class="date">25 de mayo, 2020</h4>
+<h4 class="date">2 de junio, 2020</h4>
 
 </div>
 
@@ -373,7 +373,7 @@ summary {
 <h4><strong>Inspección de Datos</strong></h4>
 <div id="carga-de-datos" class="section level5">
 <h5><strong><em>1.-Carga de datos</em></strong></h5>
-<pre class="r"><code>data&lt;-read.csv2(&quot;C:/temp/kidney_disease.csv&quot;,sep=&quot;,&quot;)
+<pre class="r"><code>data&lt;-read.csv2(&quot;data/kidney_disease.csv&quot;,sep=&quot;,&quot;)
 head(data)</code></pre>
 <pre><code>##   id  age   bp    sg  al  su    rbc       pc        pcc         ba   bgr   bu
 ## 1  0 48.0 80.0  1.02 1.0 0.0          normal notpresent notpresent 121.0 36.0
@@ -422,7 +422,7 @@ head(data)</code></pre>
 <li><em>Id</em>: (Numerical):Identificador</li>
 <li><em>Age</em> (Numerical): age in years</li>
 <li><em>bp</em> (Numerical): Blood presure(bp in mm/Hg)</li>
-<li><em>sp</em>: Specific Gravity(nominal).sg - (1.005,1.010,1.015,1.020,1.025)</li>
+<li><em>sg</em>: Specific Gravity(nominal).sg - (1.005,1.010,1.015,1.020,1.025)</li>
 <li><em>al</em>: Albumin(nominal):al - (0,1,2,3,4,5)</li>
 <li><em>su</em>: Sugar(nominal):su - (0,1,2,3,4,5)</li>
 <li><em>rbc</em>: Red Blood Cells(nominal):rbc - (normal,abnormal)</li>
@@ -444,11 +444,64 @@ head(data)</code></pre>
 <li><em>appet</em>: Appetite(nominal):appet - (good,poor)</li>
 <li><em>pe</em>: Pedal Edema(nominal):pe - (yes,no)</li>
 <li><em>ane</em>: Anemia(nominal):ane - (yes,no)</li>
-<li><em>class</em>: Class (nominal):class - (ckd,notckd)</li>
+<li><em>classification</em>: Class (nominal):class - (ckd,notckd)</li>
 </ul>
 <p>A continuación, pasamos a verificar si la información se ha cargado correctamente:</p>
 <p>-Comprobamos que el número de variables y de registros es el correcto. <strong>400 observaciones de 26 variables</strong>.</p>
+<pre class="r"><code>dim(data)</code></pre>
+<pre><code>## [1] 400  26</code></pre>
 <p>-Se evidencia errores en el tipo de ciertas variables.</p>
+<pre class="r"><code>summary(data)</code></pre>
+<pre><code>##        id              age            bp          sg        al        su     
+##  Min.   :  0.00   60.0   : 19   80.0   :116        : 47      : 46      : 49  
+##  1st Qu.: 99.75   65.0   : 17   70.0   :112   1.005:  7   0.0:199   0.0:290  
+##  Median :199.50   48.0   : 12   60.0   : 71   1.01 : 84   1.0: 44   1.0: 13  
+##  Mean   :199.50   50.0   : 12   90.0   : 53   1.015: 75   2.0: 43   2.0: 18  
+##  3rd Qu.:299.25   55.0   : 12   100.0  : 25   1.02 :106   3.0: 43   3.0: 14  
+##  Max.   :399.00   47.0   : 11          : 12   1.025: 81   4.0: 24   4.0: 13  
+##                   (Other):317   (Other): 11               5.0:  1   5.0:  3  
+##        rbc             pc              pcc               ba           bgr     
+##          :152           : 65             :  4             :  4          : 44  
+##  abnormal: 47   abnormal: 76   notpresent:354   notpresent:374   99.0   : 10  
+##  normal  :201   normal  :259   present   : 42   present   : 22   100.0  :  9  
+##                                                                  93.0   :  9  
+##                                                                  107.0  :  8  
+##                                                                  109.0  :  6  
+##                                                                  (Other):314  
+##        bu            sc           sod           pot           hemo    
+##         : 19   1.2    : 40          : 87          : 88          : 52  
+##  46.0   : 15   1.1    : 24   135.0  : 40   3.5    : 30   15.0   : 16  
+##  25.0   : 13   0.5    : 23   140.0  : 25   5.0    : 30   10.9   :  8  
+##  19.0   : 11   1.0    : 23   141.0  : 22   4.9    : 27   11.1   :  7  
+##  40.0   : 10   0.7    : 22   139.0  : 21   4.7    : 17   13.0   :  7  
+##  15.0   :  9   0.9    : 22   138.0  : 20   4.8    : 16   13.6   :  7  
+##  (Other):323   (Other):246   (Other):185   (Other):192   (Other):303  
+##       pcv            wc            rc       htn         dm       cad     
+##         : 70          :105          :130      :  2       :  2      :  2  
+##  41     : 21   9800   : 11   5.2    : 18   no :251    yes:  1   \tno:  2  
+##  52     : 21   6700   : 10   4.5    : 16   yes:147   \tno :  3   no :362  
+##  44     : 19   7200   :  9   4.9    : 14             \tyes:  2   yes: 34  
+##  48     : 19   9200   :  9   4.7    : 11             no  :258            
+##  40     : 16   9600   :  9   3.9    : 10             yes :134            
+##  (Other):234   (Other):247   (Other):201                                 
+##   appet       pe       ane      classification
+##      :  1      :  1      :  1   ckd   :248    
+##  good:317   no :323   no :339   ckd\t  :  2    
+##  poor: 82   yes: 76   yes: 60   notckd:150    
+##                                               
+##                                               
+##                                               
+## </code></pre>
+<p>Se pueden observar categoría mal introducidas y categorías vacías. Obtenedremos valores nulos, ya que, todas las variables numéricas se han cargado como factor y aparecen categorías sin informar. Cuando las variables numéricas las transformemos a numéricas aparecerán los valores nulos. Por ejemplo, en la variable bgr tenemos 44 valores sin categoría, cuando lo pasemos a numérico esto serán Na’s:</p>
+<pre class="r"><code>sum(is.na(as.numeric(gsub(&quot;,&quot;,&quot;.&quot;,data$bgr))))</code></pre>
+<pre><code>## [1] 44</code></pre>
+<p>Como decíamos tenemos 44 valores Na’s (nulos).</p>
+</div>
+<div id="imputación-de-las-variables." class="section level5">
+<h5><strong><em>2.Imputación de las variables. </em></strong></h5>
+<p>En una primera instancia cambiaremos los valores nulos por la media de los valores del atributo en cuestión. Para las variables categorícas utilizaremos el valor más frecuentado.</p>
+<p>*Nota: Los valores atípicos se evaluaran en el cleaning 2 que será el dataset el elegido para el estudio.</p>
+<p><strong>Transformación de variables</strong></p>
 <ul>
 <li><strong>Id</strong>, se ha cargado como entero que es correcto en este caso. Valores enteros: cuantitativos discretos.</li>
 </ul>
@@ -459,6 +512,7 @@ sum(unique(data$id))</code></pre>
 <pre><code>## 
 ## FALSE 
 ##   400</code></pre>
+<p>No encontramos valores nulos en la variable Id.</p>
 <ul>
 <li><strong>Age</strong>, se ha cargado como factor y debería ser entero. Valores enteros: cuantitativos discretos.Haremos la transformación necesaria.</li>
 </ul>
@@ -472,9 +526,9 @@ table(is.na(data$age))</code></pre>
 ##   391     9</code></pre>
 <pre class="r"><code>#Eliminamos nas del dataframe
 data_nonas_age&lt;-data[!is.na(data$age),]
-#data_nonas_age$age
-
-#Reemplazamos &#39;nas&#39; del dataframe por la media del atributo age.
+#data_nonas_age$age</code></pre>
+<p>Obtenemos 9 valores nulos, realizamos tratamiento sustituyendo valores por la media:</p>
+<pre class="r"><code>#Reemplazamos &#39;nas&#39; del dataframe por la media del atributo age.
 #Media de la columna age. A cada valor NA le asignamos la media de los valores de este atributo.
 media_age&lt;-mean(data_nonas_age$age)
 
@@ -498,9 +552,9 @@ sum(is.na(data$bp))#Número de valores NA</code></pre>
 <pre><code>## [1] NA</code></pre>
 <pre class="r"><code>#Eliminamos filas con nulos del dataframe
 data_nonas_bp&lt;-data[!is.na(data$bp),]
-#data_nonas_bp$bp
-
-#Media de la columna bp. A cada valor NA le asignamos la media de los valores de este atributo.
+#data_nonas_bp$bp</code></pre>
+<p>Obtenemos 12 valores Na. Realizamos sustitución por su media:</p>
+<pre class="r"><code>#Media de la columna bp. A cada valor NA le asignamos la media de los valores de este atributo.
 media_bp&lt;-mean(data_nonas_bp$bp)
 
 data$bp[is.na(data$bp)]&lt;-media_bp
@@ -519,6 +573,7 @@ unique(data$sg)# 6 Categorías</code></pre>
 <pre><code>## 
 ##       1.005  1.01 1.015  1.02 1.025 
 ##    47     7    84    75   106    81</code></pre>
+<p>Obtenemos 47 valores sin categoría definida.Realizamos tratamiento:</p>
 <pre class="r"><code>#Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias &lt;- data.frame(table(data$sg))
@@ -542,6 +597,7 @@ unique(data$al)# 7 Categorías</code></pre>
 <pre><code>## 
 ##     0.0 1.0 2.0 3.0 4.0 5.0 
 ##  46 199  44  43  43  24   1</code></pre>
+<p>Obtenemos 46 valores sin categoría definida. La sustituimos por la categoría más frecuente:</p>
 <pre class="r"><code>#Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias2 &lt;- data.frame(table(data$al))
@@ -565,6 +621,7 @@ unique(data$su)# 7 Categorías</code></pre>
 <pre><code>## 
 ##     0.0 1.0 2.0 3.0 4.0 5.0 
 ##  49 290  13  18  14  13   3</code></pre>
+<p>Observamos que tenemos 49 valores sin categoría. Realizamos sustitución por la categoría más frecuente:</p>
 <pre class="r"><code>#Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias3 &lt;- data.frame(table(data$su))
@@ -588,6 +645,7 @@ unique(data$rbc)# 3 Categorías</code></pre>
 <pre><code>## 
 ##          abnormal   normal 
 ##      152       47      201</code></pre>
+<p>Obtenemos 152 valores sin categoría. Le asignamos la categoría más frecuente:</p>
 <pre class="r"><code>#Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias4 &lt;- data.frame(table(data$rbc))
@@ -611,6 +669,7 @@ unique(data$pc)# 3 Categorías</code></pre>
 <pre><code>## 
 ##          abnormal   normal 
 ##       65       76      259</code></pre>
+<p>Obtenemos 65 valores sin categoría. Le asignamos la categoría más frecuente:</p>
 <pre class="r"><code>#Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias5 &lt;- data.frame(table(data$pc))
@@ -634,6 +693,7 @@ unique(data$pcc)# 3 Categorías</code></pre>
 <pre><code>## 
 ##            notpresent    present 
 ##          4        354         42</code></pre>
+<p>Obtenemos 4 valores sin categoría. Le asignamos la categoría más frecuente:</p>
 <pre class="r"><code>#Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias6 &lt;- data.frame(table(data$pcc))
@@ -657,6 +717,7 @@ unique(data$ba)# 3 Categorías</code></pre>
 <pre><code>## 
 ##            notpresent    present 
 ##          4        374         22</code></pre>
+<p>Obtenemos 4 valores sin categoría. Le asignamos la categoría más frecuente:</p>
 <pre class="r"><code>#Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias7 &lt;- data.frame(table(data$ba))
@@ -680,6 +741,7 @@ sum(is.na(data$bgr))#Número de valores NA</code></pre>
 <pre><code>## [1] 44</code></pre>
 <pre class="r"><code>sum(data$bgr[data$bgr==&#39;&#39;]) #Número de campos vacíos</code></pre>
 <pre><code>## [1] NA</code></pre>
+<p>Obtenemos 44 valores nulos. Les asignamos la media:</p>
 <pre class="r"><code>#Eliminamos filas con nulos del dataframe
 data_nonas&lt;-data[!is.na(data$bgr),]
 
@@ -702,6 +764,7 @@ sum(is.na(data$bu))#Número de valores NA</code></pre>
 <pre><code>## [1] 19</code></pre>
 <pre class="r"><code>sum(data$bu[data$bu==&#39;&#39;]) #Número de campos vacíos</code></pre>
 <pre><code>## [1] NA</code></pre>
+<p>Obtenemos 19 valores nulos. Les asignamos la media:</p>
 <pre class="r"><code>#Eliminamos filas con nulos del dataframe
 data_nonas_bu&lt;-data[!is.na(data$bu),]
 
@@ -724,6 +787,7 @@ sum(is.na(data$sc))#Número de valores NA</code></pre>
 <pre><code>## [1] 17</code></pre>
 <pre class="r"><code>sum(data$bu[data$sc==&#39;&#39;]) #Número de campos vacíos</code></pre>
 <pre><code>## [1] NA</code></pre>
+<p>Obtenemos 17 valores nulos. Les asignamos la media:</p>
 <pre class="r"><code>#Eliminamos filas con nulos del dataframe
 data_nonas_sc&lt;-data[!is.na(data$sc),]
 
@@ -746,6 +810,7 @@ sum(is.na(data$sod))#Número de valores NA</code></pre>
 <pre><code>## [1] 87</code></pre>
 <pre class="r"><code>sum(data$sod[data$sod==&#39;&#39;]) #Número de campos vacíos</code></pre>
 <pre><code>## [1] NA</code></pre>
+<p>Obtenemos 87 valoers nulos. Les asignamos la media:</p>
 <pre class="r"><code>#Eliminamos filas con nulos del dataframe
 data_nonas_sod&lt;-data[!is.na(data$sod),]
 
@@ -768,6 +833,7 @@ sum(is.na(data$pot))#Número de valores NA</code></pre>
 <pre><code>## [1] 88</code></pre>
 <pre class="r"><code>sum(data$pot[data$pot==&#39;&#39;]) #Número de campos vacíos</code></pre>
 <pre><code>## [1] NA</code></pre>
+<p>Obtenemos 88 valores nulos. Les asignamos la media:</p>
 <pre class="r"><code>#Eliminamos filas con nulos del dataframe
 data_nonas_pot&lt;-data[!is.na(data$pot),]
 
@@ -790,6 +856,7 @@ sum(is.na(data$hemo))#Número de valores NA</code></pre>
 <pre><code>## [1] 52</code></pre>
 <pre class="r"><code>sum(data$hemo[data$hemo==&#39;&#39;]) #Número de campos vacíos</code></pre>
 <pre><code>## [1] NA</code></pre>
+<p>Obtenemos 52 valores nulos. Les asignamos la media:</p>
 <pre class="r"><code>#Eliminamos filas con nulos del dataframe
 data_nonas_hemo&lt;-data[!is.na(data$hemo),]
 
@@ -812,6 +879,7 @@ sum(is.na(data$pcv))#Número de valores NA</code></pre>
 <pre><code>## [1] 71</code></pre>
 <pre class="r"><code>sum(data$pcv[data$pcv==&#39;&#39;]) #Número de campos vacíos</code></pre>
 <pre><code>## [1] NA</code></pre>
+<p>Obtenemos 71 valores nulos. Le asignamos la media:</p>
 <pre class="r"><code>#Eliminamos filas con nulos del dataframe
 data_nonas_pcv&lt;-data[!is.na(data$pcv),]
 
@@ -834,6 +902,7 @@ sum(is.na(data$wc))#Número de valores NA</code></pre>
 <pre><code>## [1] 106</code></pre>
 <pre class="r"><code>sum(data$wc[data$wc==&#39;&#39;]) #Número de campos vacíos</code></pre>
 <pre><code>## [1] NA</code></pre>
+<p>Obtenemos 106 valores nulos. Le asignamos la media:</p>
 <pre class="r"><code>#Eliminamos filas con nulos del dataframe
 data_nonas_wc&lt;-data[!is.na(data$wc),]
 
@@ -856,6 +925,7 @@ sum(is.na(data$rc))#Número de valores NA</code></pre>
 <pre><code>## [1] 131</code></pre>
 <pre class="r"><code>sum(data$wc[data$rc==&#39;&#39;]) #Número de campos vacíos</code></pre>
 <pre><code>## [1] NA</code></pre>
+<p>Obtenemos 131 valores nulos. Le asignamos la media:</p>
 <pre class="r"><code>#Eliminamos filas con nulos del dataframe
 data_nonas_rc&lt;-data[!is.na(data$rc),]
 
@@ -878,6 +948,7 @@ unique(data$htn)# 3 Categorías</code></pre>
 <pre><code>## 
 ##      no yes 
 ##   2 251 147</code></pre>
+<p>Encontramos 2 valores sin variable categórica. Les asignamos las más frecuentes:</p>
 <pre class="r"><code>#Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias8 &lt;- data.frame(table(data$htn))
@@ -901,6 +972,7 @@ unique(data$dm)# 5 Categorías</code></pre>
 <pre><code>## 
 ##       yes  \tno \tyes   no  yes 
 ##    2    1    3    2  258  134</code></pre>
+<p>Encontramos dos valores sin variable categórica. Les asignamos la categoría más frecuente:</p>
 <pre class="r"><code>#Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias9 &lt;- data.frame(table(data$dm))
@@ -927,6 +999,7 @@ unique(data$cad)# 4 Categorías</code></pre>
 <pre><code>## 
 ##     \tno  no yes 
 ##   2   2 362  34</code></pre>
+<p>Encontramos dos valores sin variable categórica. Les asignamos la categoría más frecuente:</p>
 <pre class="r"><code>#Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias10&lt;- data.frame(table(data$cad))
@@ -952,6 +1025,7 @@ unique(data$appet)# 3 Categorías</code></pre>
 <pre><code>## 
 ##      good poor 
 ##    1  317   82</code></pre>
+<p>Encontramos un valor sin categoría. Le asignamos la categoría más frecuente:</p>
 <pre class="r"><code>#Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias11&lt;- data.frame(table(data$appet))
@@ -976,6 +1050,7 @@ unique(data$pe)# 3 Categorías</code></pre>
 <pre><code>## 
 ##      no yes 
 ##   1 323  76</code></pre>
+<p>Encontramos un valor sin categoría. Le asignamos la categoría más frecuente:</p>
 <pre class="r"><code>#Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias12&lt;- data.frame(table(data$pe))
@@ -1000,6 +1075,7 @@ unique(data$ane)# 3 Categorías</code></pre>
 <pre><code>## 
 ##      no yes 
 ##   1 339  60</code></pre>
+<p>Encontramos un valor sin categoría. Le asignamos la categoría más frecuente:</p>
 <pre class="r"><code>#Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias13&lt;- data.frame(table(data$ane))
@@ -1024,6 +1100,7 @@ unique(data$classification)# 3 Categorías</code></pre>
 <pre><code>## 
 ##    ckd   ckd\t notckd 
 ##    248      2    150</code></pre>
+<p>Encontramos dos valores con una categoría mal informada. Le asignamos la categoría que le pertoca:</p>
 <pre class="r"><code>#Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias14&lt;- data.frame(table(data$classification))

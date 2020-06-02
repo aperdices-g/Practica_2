@@ -18,7 +18,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ```{r}
-data<-read.csv2("C:/temp/kidney_disease.csv",sep=",")
+data<-read.csv2("data/kidney_disease.csv",sep=",")
 head(data)
 ```
 
@@ -30,7 +30,7 @@ Las variables objeto de estudio son las siguientes:
 *	*Id*: (Numerical):Identificador
 *	*Age* (Numerical): age in years
 *	*bp* (Numerical): Blood presure(bp in mm/Hg)
-*	*sp*: Specific Gravity(nominal).sg - (1.005,1.010,1.015,1.020,1.025)
+*	*sg*: Specific Gravity(nominal).sg - (1.005,1.010,1.015,1.020,1.025)
 *	*al*: Albumin(nominal):al - (0,1,2,3,4,5)
 * *su*: Sugar(nominal):su - (0,1,2,3,4,5)
 * *rbc*: Red Blood Cells(nominal):rbc - (normal,abnormal)
@@ -52,13 +52,38 @@ Las variables objeto de estudio son las siguientes:
 *	*appet*: Appetite(nominal):appet - (good,poor)
 *	*pe*: Pedal Edema(nominal):pe - (yes,no)
 *	*ane*: Anemia(nominal):ane - (yes,no)
-*	*class*: Class (nominal):class - (ckd,notckd)
+*	*classification*: Class (nominal):class - (ckd,notckd)
 
 A continuación, pasamos a verificar si la información se ha cargado correctamente:
 
 -Comprobamos que el número de variables y de registros es el correcto. **400 observaciones de 26 variables**.
 
+```{r}
+dim(data)
+```
+
 -Se evidencia errores en el tipo de ciertas variables.
+
+```{r}
+summary(data)
+```
+
+Se pueden observar categoría mal introducidas y categorías vacías. Obtenedremos valores nulos, ya que, todas las variables numéricas se han cargado como factor y aparecen categorías sin informar. Cuando las variables numéricas las transformemos a numéricas aparecerán los valores nulos. Por ejemplo, en la variable bgr tenemos 44 valores sin categoría, cuando lo pasemos a numérico esto serán Na's:
+
+```{r}
+sum(is.na(as.numeric(gsub(",",".",data$bgr))))
+```
+
+Como decíamos tenemos 44 valores Na's (nulos). 
+
+##### ***2.Imputación de las variables. ***
+
+En una primera instancia cambiaremos los valores nulos por la media de los valores del atributo en cuestión. Para las variables categorícas utilizaremos el valor más frecuentado.
+
+
+*Nota: Los valores atípicos se evaluaran en el cleaning 2 que será el dataset el elegido para el estudio.
+
+**Transformación de variables**
 
 - **Id**, se ha cargado como entero que es correcto en este caso. Valores enteros: cuantitativos discretos.
 
@@ -68,7 +93,9 @@ sum(unique(data$id))
 table(is.na(data$id))#No hay nulos
 ```
 
-  
+No encontramos valores nulos en la variable Id.
+
+
 - **Age**, se ha cargado como factor y debería ser entero. Valores enteros: cuantitativos discretos.Haremos la transformación necesaria.
   
 ```{r}
@@ -82,6 +109,10 @@ table(is.na(data$age))
 data_nonas_age<-data[!is.na(data$age),]
 #data_nonas_age$age
 
+```
+Obtenemos 9 valores nulos, realizamos tratamiento sustituyendo valores por la media:
+
+```{r}
 #Reemplazamos 'nas' del dataframe por la media del atributo age.
 #Media de la columna age. A cada valor NA le asignamos la media de los valores de este atributo.
 media_age<-mean(data_nonas_age$age)
@@ -92,8 +123,6 @@ table(is.na(data$age))
 
 ```
 
-
-  
 - **bp**, se ha cargado como factor y debería ser numeric. Valores numeric: cuantitativos continuos.Haremos las transformaciónes necesarias.
   
   
@@ -111,6 +140,10 @@ sum(data$bp[data$bp=='']) #Número de campos vacíos
 data_nonas_bp<-data[!is.na(data$bp),]
 #data_nonas_bp$bp
 
+```
+Obtenemos 12 valores Na. Realizamos sustitución por su media:
+
+```{r}
 #Media de la columna bp. A cada valor NA le asignamos la media de los valores de este atributo.
 media_bp<-mean(data_nonas_bp$bp)
 
@@ -126,8 +159,11 @@ sum(is.na(data$bp))
 unique(data$sg)# 6 Categorías
 sum(is.na(data$sg)) #No hay 'NA'
 table(data$sg)
+```
 
+Obtenemos 47 valores sin categoría definida.Realizamos tratamiento:
 
+```{r}
 #Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias <- data.frame(table(data$sg))
@@ -144,7 +180,11 @@ table(data$sg)
 unique(data$al)# 7 Categorías
 sum(is.na(data$al)) #No hay 'NA'
 table(data$al)
+```
 
+Obtenemos 46 valores sin categoría definida. La sustituimos por la categoría más frecuente:
+
+```{r}
 #Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias2 <- data.frame(table(data$al))
@@ -161,7 +201,12 @@ table(data$al)
 unique(data$su)# 7 Categorías
 sum(is.na(data$su)) #No hay 'NA'
 table(data$su)
+```
 
+Observamos que tenemos 49 valores sin categoría. Realizamos sustitución por la categoría más frecuente:
+
+
+```{r}
 #Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias3 <- data.frame(table(data$su))
@@ -178,7 +223,11 @@ table(data$su)
 unique(data$rbc)# 3 Categorías
 sum(is.na(data$rbc)) #No hay 'NA'
 table(data$rbc)
+```
 
+Obtenemos 152 valores sin categoría. Le asignamos la categoría más frecuente:
+
+```{r}
 #Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias4 <- data.frame(table(data$rbc))
@@ -195,7 +244,11 @@ table(data$rbc)
 unique(data$pc)# 3 Categorías
 sum(is.na(data$pc)) #No hay 'NA'
 table(data$pc)
+```
 
+Obtenemos 65 valores sin categoría. Le asignamos la categoría más frecuente:
+
+```{r}
 #Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias5 <- data.frame(table(data$pc))
@@ -212,7 +265,11 @@ table(data$pc)
 unique(data$pcc)# 3 Categorías
 sum(is.na(data$pcc)) #No hay 'NA'
 table(data$pcc)
+```
 
+Obtenemos 4 valores sin categoría. Le asignamos la categoría más frecuente:
+
+```{r}
 #Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias6 <- data.frame(table(data$pcc))
@@ -229,7 +286,11 @@ table(data$pcc)
 unique(data$ba)# 3 Categorías
 sum(is.na(data$ba)) #No hay 'NA'
 table(data$ba)
+```
 
+Obtenemos 4 valores sin categoría. Le asignamos la categoría más frecuente:
+
+```{r}
 #Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias7 <- data.frame(table(data$ba))
@@ -250,7 +311,11 @@ data$bgr<-as.numeric(gsub(",",".",data$bgr))#Se corrige posibles inconsistencias
 
 sum(is.na(data$bgr))#Número de valores NA
 sum(data$bgr[data$bgr=='']) #Número de campos vacíos
+```
 
+Obtenemos 44 valores nulos. Les asignamos la media:
+
+```{r}
 #Eliminamos filas con nulos del dataframe
 data_nonas<-data[!is.na(data$bgr),]
 
@@ -273,7 +338,11 @@ data$bu<-as.numeric(gsub(",",".",data$bu))#Se corrige posibles inconsistencias e
 
 sum(is.na(data$bu))#Número de valores NA
 sum(data$bu[data$bu=='']) #Número de campos vacíos
+```
 
+Obtenemos 19 valores nulos. Les asignamos la media:
+
+```{r}
 #Eliminamos filas con nulos del dataframe
 data_nonas_bu<-data[!is.na(data$bu),]
 
@@ -295,7 +364,11 @@ data$sc<-as.numeric(gsub(",",".",data$sc))#Se corrige posibles inconsistencias e
 
 sum(is.na(data$sc))#Número de valores NA
 sum(data$bu[data$sc=='']) #Número de campos vacíos
+```
 
+Obtenemos 17 valores nulos. Les asignamos la media:
+
+```{r}
 #Eliminamos filas con nulos del dataframe
 data_nonas_sc<-data[!is.na(data$sc),]
 
@@ -317,7 +390,11 @@ data$sod<-as.numeric(gsub(",",".",data$sod))#Se corrige posibles inconsistencias
 
 sum(is.na(data$sod))#Número de valores NA
 sum(data$sod[data$sod=='']) #Número de campos vacíos
+```
 
+Obtenemos 87 valoers nulos. Les asignamos la media:
+
+```{r}
 #Eliminamos filas con nulos del dataframe
 data_nonas_sod<-data[!is.na(data$sod),]
 
@@ -339,7 +416,11 @@ data$pot<-as.numeric(gsub(",",".",data$pot))#Se corrige posibles inconsistencias
 
 sum(is.na(data$pot))#Número de valores NA
 sum(data$pot[data$pot=='']) #Número de campos vacíos
+```
 
+Obtenemos 88 valores nulos. Les asignamos la media:
+
+```{r}
 #Eliminamos filas con nulos del dataframe
 data_nonas_pot<-data[!is.na(data$pot),]
 
@@ -361,7 +442,11 @@ data$hemo<-as.numeric(gsub(",",".",data$hemo))#Se corrige posibles inconsistenci
 
 sum(is.na(data$hemo))#Número de valores NA
 sum(data$hemo[data$hemo=='']) #Número de campos vacíos
+```
 
+Obtenemos 52 valores nulos. Les asignamos la media:
+
+```{r}
 #Eliminamos filas con nulos del dataframe
 data_nonas_hemo<-data[!is.na(data$hemo),]
 
@@ -383,7 +468,11 @@ data$pcv<-suppressWarnings(as.numeric(gsub(",",".",data$pcv)))#Se corrige posibl
 
 sum(is.na(data$pcv))#Número de valores NA
 sum(data$pcv[data$pcv=='']) #Número de campos vacíos
+```
 
+Obtenemos 71 valores nulos. Le asignamos la media:
+
+```{r}
 #Eliminamos filas con nulos del dataframe
 data_nonas_pcv<-data[!is.na(data$pcv),]
 
@@ -406,6 +495,12 @@ data$wc<-suppressWarnings(as.numeric(gsub(",",".",data$wc)))#Se corrige posibles
 sum(is.na(data$wc))#Número de valores NA
 sum(data$wc[data$wc=='']) #Número de campos vacíos
 
+```
+
+Obtenemos 106 valores nulos. Le asignamos la media:
+
+```{r}
+
 #Eliminamos filas con nulos del dataframe
 data_nonas_wc<-data[!is.na(data$wc),]
 
@@ -427,7 +522,11 @@ data$rc<-suppressWarnings(as.numeric(gsub(",",".",data$rc)))#Se corrige posibles
 
 sum(is.na(data$rc))#Número de valores NA
 sum(data$wc[data$rc=='']) #Número de campos vacíos
+```
 
+Obtenemos 131 valores nulos. Le asignamos la media:
+
+```{r}
 #Eliminamos filas con nulos del dataframe
 data_nonas_rc<-data[!is.na(data$rc),]
 
@@ -445,7 +544,11 @@ sum(is.na(data$rc))
 unique(data$htn)# 3 Categorías
 sum(is.na(data$htn)) #No hay 'NA'
 table(data$htn)
+```
 
+Encontramos 2 valores sin variable categórica. Les asignamos las más frecuentes:
+
+```{r}
 #Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias8 <- data.frame(table(data$htn))
@@ -462,7 +565,11 @@ table(data$htn)
 unique(data$dm)# 5 Categorías
 sum(is.na(data$dm)) #No hay 'NA'
 table(data$dm)
+```
 
+Encontramos dos valores sin variable categórica. Les asignamos la categoría más frecuente:
+
+```{r}
 #Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias9 <- data.frame(table(data$dm))
@@ -482,7 +589,11 @@ table(data$dm)
 unique(data$cad)# 4 Categorías
 sum(is.na(data$cad)) #No hay 'NA'
 table(data$cad)
+```
 
+Encontramos dos valores sin variable categórica. Les asignamos la categoría más frecuente:
+
+```{r}
 #Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias10<- data.frame(table(data$cad))
@@ -501,7 +612,11 @@ table(data$cad)
 unique(data$appet)# 3 Categorías
 sum(is.na(data$appet)) #No hay 'NA'
 table(data$appet)
+```
 
+Encontramos un valor sin categoría. Le asignamos la categoría más frecuente:
+
+```{r}
 #Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias11<- data.frame(table(data$appet))
@@ -519,7 +634,11 @@ table(data$appet)
 unique(data$pe)# 3 Categorías
 sum(is.na(data$pe)) #No hay 'NA'
 table(data$pe)
+```
 
+Encontramos un valor sin categoría. Le asignamos la categoría más frecuente:
+
+```{r}
 #Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias12<- data.frame(table(data$pe))
@@ -537,7 +656,11 @@ table(data$pe)
 unique(data$ane)# 3 Categorías
 sum(is.na(data$ane)) #No hay 'NA'
 table(data$ane)
+```
 
+Encontramos un valor sin categoría. Le asignamos la categoría más frecuente:
+
+```{r}
 #Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias13<- data.frame(table(data$ane))
@@ -556,7 +679,11 @@ table(data$ane)
 unique(data$classification)# 3 Categorías
 sum(is.na(data$classification)) #No hay 'NA'
 table(data$classification)
+```
 
+Encontramos dos valores con una categoría mal informada. Le asignamos la categoría que le pertoca:
+
+```{r}
 #Sustituimos los valores vacíos por la categoría más frecuente
 
 frecuencias14<- data.frame(table(data$classification))
