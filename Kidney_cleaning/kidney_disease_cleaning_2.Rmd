@@ -1,0 +1,666 @@
+---
+title: "Práctica 2. Tipologia de Datos. Limpieza y Visualización_2"
+author: "Nuria García y Alicia Perdices"
+date: '`r format(Sys.Date(),"%e de %B, %Y")`'
+output:
+  html_document: 
+    toc: yes
+    number_sections: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(DMwR2)
+library(VIM)
+```
+
+#### **Inspección de Datos** 
+
+##### ***1.-Carga de datos***
+
+```{r}
+data<-read.csv2("data/kidney_disease.csv",sep=",")
+names<-colnames(data)
+#Variables cualitativas
+idQualitative <- which(names=="sg"| names=="al" | names=="su"| names=="rbc" | names=="pc" | names=="pcc" | names=="ba" | names=="htn" | names=="dm" | names=="cad"  | names=="appet" | names=="pe" | names=="ane"| names=="classification"  )
+
+idQuantitative <- which(names=="age"| names=="bp" | names=="bgr"| names=="bu" | names=="sc" | names=="sod" | names=="pot" | names=="hemo" | names=="pcv" | names=="wc"  | names=="rc")
+
+```
+
+Previsualización de los datos:
+
+```{r}
+head(data)
+```
+
+Estructura de los datos:
+
+```{r}
+str(data)
+```
+
+*Nota: en cleaning 1 se puede encontrar una descripción exhaustiva de las variables
+
+##### ***2.Imputación de las variables numéricas con los tres vecinos más cercanos. ***
+
+En vez de sustituir los valores en blanco por la media de los valores del atributio en cuestión, vamos a hacer la imputación con los tres vecinos más cercanos.
+
+Además, se realizará estudio de valores atípicos, considerando el rango de valores posibles. Los valores que estén fuera de dichos rangos, según el valor obtenido, se considerará un posible fallo de introducción en los datos, en este caso, se le asignará valor nulo para posteriormente tratarlo con la misma regla que el resto.
+
+**Transformación de variables y estudio de valores atípicos**
+
+  * **age** : Age
+  
+```{r}
+data$age<-as.character(data$age)#Conversion a caracter
+data$age<-as.numeric(gsub(",",".",data$age))#Se corrige posibles inconsistencias en el separador decimal y se tranforma en numeric.
+data$age<-as.integer(data$age)#Se transforma a entero
+#Comprobemos si hay nulos
+table(is.na(data$age))
+
+#Eliminamos nas del dataframe
+data_nonas_age<-data[!is.na(data$age),]
+#data_nonas_age$age
+
+#Reemplazamos 'nas' del dataframe por la media del atributo age.
+#Media de la columna age. A cada valor NA le asignamos la media de los valores de este atributo.
+media_age<-mean(data_nonas_age$age)
+
+data$age[is.na(data$age)]<-trunc(media_age)
+table(is.na(data$age))
+```
+
+Se han subsituido los 9 valores nulos por la media de edad. En este caso la imputación se ha realizado con la media del atributo edad.
+
+```{r}
+summary(data$age)
+```
+
+Los valores que tenemos en edad se encuentran dentro del rango esperado.
+
+  * **bp**: Blood Preasure
+
+```{r}
+#Blood Pressure  
+#===============
+
+data$bp<-as.character(data$bp)#Conversion a caracter
+data$bp<-as.numeric(gsub(",",".",data$bp))#Se corrige posibles inconsistencias en el separador decimal y se tranforma en numeric.
+id_bp<-which(is.na(data$bp))
+data[id_bp,]$bp<-NA
+boxplot(data$bp,main='Blood Pressure')
+```
+
+```{r}
+summary(data$bp)
+```
+
+Los valores obtenidos están dentro del rango de la presión arterial, por tanto, no hemos de quitar ningún valor. Los valores nulos se modificarán en otro apartado por los vecinos más cercanos.
+
+* **bgr**: Blood Glucose Random
+
+```{r}
+#Transformación a tipo numeric
+data$bgr<-as.character(data$bgr)#Conversion a caracter
+data$bgr<-as.numeric(gsub(",",".",data$bgr))#Se corrige posibles inconsistencias en el separador decimal y se tranforma en numeric.
+id_bgr<-which(is.na(data$bgr))
+data[id_bgr,]$bgr<-NA
+boxplot(data$bgr,main='Blood Glucose Random')
+```
+```{r}
+summary(data$bgr)
+```
+
+Los niveles máximos de azúcar pueden indicar una enfermedad pero, no se escapan de los límites que podemos encontrarnos en la realidad, es decir, el Síndrome hiperosmolar diabético los parámetros que se alcanzan son superiores de 600 mg/dl *. Así nuestros parámetros máximos son razonables. Los valores nulos se limpiaran en el siguiente apartado por el método de los vecinos más cercanos.
+
+
+*consultar: [Síndrome hiperosmolar diabético](https://www.mayoclinic.org/es-es/diseases-conditions/diabetic-hyperosmolar-syndrome/symptoms-causes/syc-20371501)
+
+* **bu**:Blood Urea
+
+```{r}
+#Transformación a tipo numeric
+data$bu<-as.character(data$bu)#Conversion a caracter
+data$bu<-as.numeric(gsub(",",".",data$bu))#Se corrige posibles inconsistencias en el separador decimal y se tranforma en numeric.
+summary(data$bu)
+```
+
+```{r}
+id_bu<-which(is.na(data$bu)|data$bu>200)  
+data[id_bu,]$bu<-NA
+boxplot(data$bu,main='Blood Urea')
+```
+
+
+*consultar: [valores altos urea en sangre](https://www.tuotromedico.com/parametros/urea-en-sangre-alta.htm#apartValores)
+
+* **sc**: Serum Creatinine
+
+```{r}
+#Transformación a tipo numeric
+data$sc<-as.character(data$sc)#Conversion a caracter
+data$sc<-as.numeric(gsub(",",".",data$sc))#Se corrige posibles inconsistencias en el separador decimal y se tranforma en numeric.
+summary(data$sc)
+```
+
+Una creatinina tan elevada no puede ser cierta. Veamos cuántos valores tenemos mayor a 10 mg:
+
+```{r}
+sum(data[!is.na(data$sc),]$sc > 10.00)
+```
+
+Tenemos 24 valores superiores a 10 mg. Es una cifra demasiado elevada incluso para pacientes graves * (pacientes con IRC en estadío 5 no suelen tener mas de 8-10 unidades). Por este motivo los valores con serum creatinina mayor de 10mg los reemplazamos por valores nulos. Posteriormente se realizará imputación de dicho valor por el método de vecinos más cercanos. 
+
+*consultar: [valores creatinina en sangre](https://www.tuotromedico.com/parametros/creatinina-en-sangre-alta.htm#apartValores)
+
+```{r}
+id_sc<-which(is.na(data$sc)|data$sc>10)#Reemplazarmos los valores de creatinina mayores que 10.
+data[id_sc,]$sc<-NA
+boxplot(data$sc,main='Serum Creatinine')  
+```
+
+Seguimos teniendo valores atípicos pero estos son más creibles y determinantes en caso de enfermedad renal.
+
+* **sod**: Sodium
+
+```{r}
+#Transformación a tipo numeric
+data$sod<-as.character(data$sod)#Conversion a caracter
+data$sod<-as.numeric(gsub(",",".",data$sod))#Se corrige posibles inconsistencias en el separador decimal y se tranforma en numeric.
+summary(data$sod)
+```
+
+Obtenemos un valor mínimo demasiado bajo. Este valor de 4.5 es demasiado bajo, posiblemente sea un error *.Veámos cuantos valores menores a 10 tenemos:
+
+```{r}
+sum(data[!is.na(data$sod),]$sod < 10)
+```
+
+Solo tenemos este valor, por tanto, le asignaremos valor nulo para posteriormente asignarle un valor por la imputación de los vecinos más cercanos. 
+
+
+*consultar: [Valores sodio en sangre bajo](https://www.tuotromedico.com/parametros/sodio-en-sangre-bajo.htm#apartValores)
+
+```{r}
+id_sod<-which(is.na(data$sod)|data$sod<10) #Nos guardamos los valores que son nulos y los menores de 10
+data[id_sod,]$sod<-NA    #Asignamos valores nulos a los encontrados
+boxplot(data$sod,main='Sodium')   #Visualización de outliers
+```
+
+Seguimos teniendo outliers pero los valores son más reales o posibles. Indicando o determinando alguna anomalía o enfermedad.
+
+* **pot**: Potassium
+
+```{r}
+#Transformación a tipo numeric
+data$pot<-as.character(data$pot)#Conversion a caracter
+data$pot<-as.numeric(gsub(",",".",data$pot))#Se corrige posibles inconsistencias en el separador decimal y se tranforma en numeric.
+summary(data$pot)
+```
+
+Tenemos valores demasiado elevados que el Potasio. Consideramos que valores más altos de 10 pueden ser valores mal introducidos *. Veámos cuantos valores mayores a 10 tenemos:
+
+```{r}
+sum(data[!is.na(data$pot),]$pot > 10)
+```
+
+Estos dos valores les asignaremos valores nulos para posteriormente (en el tratamiento de valores nulos) les asignemos valores más creíbles.
+
+```{r}
+id_pot<-which(is.na(data$pot) | data$pot > 10) #Detectamos valores nulos y superiores a 10
+data[id_pot,]$pot<-NA
+boxplot(data$pot,main='Potassium')
+```
+
+Seguimos teniendo valores atípicos, pero estamos dentro del rango posible.
+
+
+*consultar: [valores altos de potasio en sangre](https://www.tuotromedico.com/parametros/potasio-en-sangre-alto.htm#apartValores)
+
+* **hemo**: Hemoglobin
+
+```{r}
+#Transformación a tipo numeric
+data$hemo<-as.character(data$hemo)#Conversion a caracter
+data$hemo<-as.numeric(gsub(",",".",data$hemo))#Se corrige posibles inconsistencias en el separador decimal y se tranforma en numeric.
+summary(data$hemo)
+```
+
+Vemos que tenemos valores de hemoglobina muy bajo. Creemos que a partir de 5 es demasiado bajo y por tanto, podríamos considerarlo un valor atípico *. Veámos cuantos valores inferiores a 5 tenemos:
+
+```{r}
+sum(data[!is.na(data$hemo),]$hemo < 5)
+```
+
+Los dos valores encontrados les asignaremos valores nulos para volver a asignales un valor con los vecinos más cercanos.
+
+```{r}
+id_hemo<-which(is.na(data$hemo) | data$hemo < 5) #detectamos valores nulos y hemoglobina menor de 5
+data[id_hemo,]$hemo<-NA                  #asignamos valores nulos
+boxplot(data$hemo,main='Hemoglobin')
+```
+
+En este caso no tenemos outliers.
+
+*consultar: [hemoglobina valores bajos](https://www.tuotromedico.com/parametros/hemoglobina-en-sangre-baja.htm#apartValores)
+
+* **pcv**: Packed Cell Volume
+
+```{r}
+#Transformación a tipo numeric
+data$pcv<-as.character(data$pcv)#Conversion a caracter
+data$pcv<-suppressWarnings(as.numeric(gsub(",",".",data$pcv)))#Se corrige posibles inconsistencias en el separador decimal y se tranforma en numeric.
+summary(data$pcv)
+```
+
+Tenemos valores nulos que posteriormente trataremos. Los valores pcv los encontramos dentro de los posibles. Una pcv bajo nos puede indicar anemia. Por lo que no tratamos valores atípicos.
+
+
+```{r}
+id_pcv<-which(is.na(data$pcv))
+data[id_pcv,]$pcv<-NA
+boxplot(data$pcv,main='Packed Cell Volume')
+```
+
+Obtenemos un valor outlier.
+
+* **wc**: White Blood
+
+```{r}
+#Transformación a tipo numeric
+data$wc<-as.character(data$wc)#Conversion a caracter
+data$wc<-suppressWarnings(as.numeric(gsub(",",".",data$wc)))#Se corrige posibles inconsistencias en el separador decimal y se tranforma en numeric.
+summary(data$wc)
+```
+
+Tenemos valores nulos que posteriormente se trataran. Los valores de leucocitos (o glóbulos blancos) estan dentro de un rango posible para las analíticas *. Por lo que no tratamos valores atípicos.
+
+```{r}
+id_wc<-which(is.na(data$wc))
+data[id_wc,]$wc<-NA
+boxplot(data$wc,main='White Blood Cell')
+```
+
+Obtenemos valores outliers a partir de los 15000 (aproximadamente).
+
+*consultar: [rango leucocitos](https://www.rnceus.com/cbc/cbcwbc.html) (mirar al final valores máximos y mínimos)
+
+* **rc**: Red Blood Cell Count
+
+```{r}
+#Transformación a tipo numeric
+data$rc<-as.character(data$rc)#Conversion a caracter
+data$rc<-suppressWarnings(as.numeric(gsub(",",".",data$rc)))#Se corrige posibles inconsistencias en el separador decimal y se tranforma en numeric.
+summary(data$rc)
+```
+
+Los parámetros de glóbulos rojos mostramos los consideramos posibles. Obtenemos valores nulos que se tratarán con posterioridad.
+
+```{r}
+
+id_rc<-which(is.na(data$rc))
+data[id_rc,]$rc<-NA
+boxplot(data$rc,main='Red Blood Cell Count')
+```
+
+Vemos que tenemos un outlier.
+
+
+
+Ademas, hemos tratado los valores extremos del siguiente modo:
+
+* Blood Pressure:Valores posibles en pacientes con hipertensión arterial. Los conservamos
+* Blood Glucose: Valores compatibles con pacientes diabéticos.Conservamos
+* Creatinine: Reemplazarmos los registros con una creatinina superior a 10 (pacientes con IRC en estadío 5, estando en diálisis, no suelen tener mas de 8-10 unidades)
+* Sodium:Reemplazarmos el valor 4.5 teniendo en cuenta que el rango normal de los valores de sodio son (135-145 unidades)
+* Potassium :Reemplazaremos 37,47 teniendo en cuenta que el rango normal de los valores de potasio son (3.4-5.5 unidades)
+* Hemoglobin: Reemplazamos. Valor no compatible.
+* White Blood Cell:valores compatibles con infección o incluso con enfermedad subyacente. Conservamos.
+* Red Blood Cell Count:Valor compatible con enfermedad (Hepaticas con Ferritina alta).Mantenemos.
+* Blood Urea: Reemplazamos a partir de 200. Valores >200 compatibles con IRC muy muy avanzada.
+
+**Imputamos las variables numéricas con los tres vecinos más cercanos.**
+
+```{r}
+#Imputación para la variable bp
+#("age","bp","bgr","bu","sc","sod","pot","hemo","pcv","wc","rc")
+#x<-data[,idQuantitative]
+#knnOutut<-kNN(x,variable=c('bp'),k=3,dist_var=c("age","bgr","bu","sc","sod","pot","hemo","pcv","wc","rc"))
+#knnOutut[knnOutut$bp_imp==TRUE,]
+#data[id_bp,]$bp<-knnOutut[knnOutut$bp_imp==TRUE,]$bp
+x<-data[,idQuantitative]#Datos numéricos del dataset
+
+#Imputación para todas las variables. Asignamos los valores al dataframe tras la imputación.
+knnOutut_total<-kNN(x,variable=c("age","bp","bgr","bu","sc","sod","pot","hemo","pcv","wc","rc"),k=3,dist_var=c("age","bp","bgr","bu","sc","sod","pot","hemo","pcv","wc","rc"))
+head(knnOutut_total)
+
+data[id_bp,]$bp<-knnOutut_total[knnOutut_total$bp_imp==TRUE,]$bp
+data[id_bgr,]$bgr<-knnOutut_total[knnOutut_total$bgr_imp==TRUE,]$bgr
+data[id_bu,]$bu<-knnOutut_total[knnOutut_total$bu_imp==TRUE,]$bu
+data[id_sc,]$sc<-knnOutut_total[knnOutut_total$sc_imp==TRUE,]$sc
+data[id_sod,]$sod<-knnOutut_total[knnOutut_total$sod_imp==TRUE,]$sod
+data[id_pot,]$pot<-knnOutut_total[knnOutut_total$pot_imp==TRUE,]$pot
+data[id_hemo,]$hemo<-knnOutut_total[knnOutut_total$hemo_imp==TRUE,]$hemo
+data[id_pcv,]$pcv<-knnOutut_total[knnOutut_total$pcv_imp==TRUE,]$pcv
+data[id_wc,]$wc<-knnOutut_total[knnOutut_total$wc_imp==TRUE,]$wc
+data[id_rc,]$rc<-knnOutut_total[knnOutut_total$rc_imp==TRUE,]$rc
+
+
+```
+
+Comprobemos que todos los valores perdidos han sido imputados:
+
+```{r}
+sum(is.na(data$bp))
+sum(is.na(data$bgr))
+sum(is.na(data$bu))
+sum(is.na(data$sc))
+sum(is.na(data$sod))
+sum(is.na(data$pot))
+sum(is.na(data$hemo))
+sum(is.na(data$pcv))
+sum(is.na(data$wc))
+sum(is.na(data$rc))
+
+```
+
+##### ***2.Imputación de las variables categóricas con la clase más frecuente. ***
+
+
+  * **sg**: Specific Gravity: se ha cargado como factor correctamente.Sin embargo hay 6 categorías y debería haber 5 (1.005,1.010,1.015,1.020,1.025).Realizamos las transformaciones necesarias. Sustituimos los valores vacíos por la categoría más frecuente.
+
+  
+```{r}
+#Comprobamos las categorías
+unique(data$sg)# 6 Categorías
+sum(is.na(data$sg)) #No hay 'NA'
+table(data$sg)
+
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias <- data.frame(table(data$sg))
+moda <- frecuencias[which.max(frecuencias$Freq),1]
+
+data$sg[data$sg=='']<-moda
+table(data$sg)
+
+```
+
+
+Corregidos los valores nulos que residían en la variable por la catergoría más frecuente.
+
+  * **al**: Albumin: se ha cargado correctamente como factor. Debería tener 6 niveles (0,1,2,3,4,5) , pero obtenemos en un inicio 7.
+ 
+```{r}
+#Comprobamos las categorías
+unique(data$al)# 7 Categorías
+sum(is.na(data$al)) #No hay 'NA'
+table(data$al)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias2 <- data.frame(table(data$al))
+moda2 <- frecuencias2[which.max(frecuencias2$Freq),1]
+
+data$al[data$al=='']<-moda2
+table(data$al)
+```
+
+Corregidos los valores nulos que residían en la variable por la catergoría más frecuente.
+ 
+* **su**: Sugar: se ha cargado correctamente como factor. Debería tener 6 niveles (0,1,2,3,4,5) , pero obtenemos en un inicio 7.
+
+```{r}
+#Comprobamos las categorías
+unique(data$su)# 7 Categorías
+sum(is.na(data$su)) #No hay 'NA'
+table(data$su)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias3 <- data.frame(table(data$su))
+moda3 <- frecuencias3[which.max(frecuencias3$Freq),1]
+
+data$su[data$su=='']<-moda3
+table(data$su)
+```
+
+Corregidos los valores nulos que residían en la variable por la catergoría más frecuente.
+
+
+* **rbc** Red Blood Cells:se ha cargado correctamente como factor. Debería tener 2 niveles (normal,abnormal) , pero obtenemos en un inicio 3.
+
+```{r}
+#Comprobamos las categorías
+unique(data$rbc)# 3 Categorías
+sum(is.na(data$rbc)) #No hay 'NA'
+table(data$rbc)
+```
+
+```{r}
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias4 <- data.frame(table(data$rbc))
+moda4 <- frecuencias4[which.max(frecuencias4$Freq),1]
+
+data$rbc[data$rbc=='']<-moda4
+table(data$rbc)
+```
+
+Corregidos los valores nulos que residían en la variable por la categoría más frecuente.
+
+* **pc**: Pus Cell: se ha cargado correctamente como factor. Debería tener 2 niveles (normal,abnormal) , pero obtenemos en un inicio 3.
+
+```{r}
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias5 <- data.frame(table(data$pc))
+moda5<- frecuencias5[which.max(frecuencias5$Freq),1]
+
+data$pc[data$pc=='']<-moda5
+summary(data$pc)
+```
+
+Corregidos los valores nulos que residían en la variable por la catergoría más frecuente.
+
+* **pcc**: Pus Cell clumps: se ha cargado correctamente como factor. Debería tener 2 niveles  (present,notpresent)  , pero obtenemos en un inicio 3.
+
+```{r}
+#Comprobamos las categorías
+unique(data$pcc)# 3 Categorías
+sum(is.na(data$pcc)) #No hay 'NA'
+table(data$pcc)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias6 <- data.frame(table(data$pcc))
+moda6<- frecuencias6[which.max(frecuencias6$Freq),1]
+
+data$pcc[data$pcc=='']<-moda6
+table(data$pcc)
+```
+
+Corregidos los valores nulos que residían en la variable por la catergoría más frecuente.
+
+
+* **ba**: Bacteria: se ha cargado correctamente como factor. Debería tener 2 niveles  (present,notpresent)  , pero obtenemos en un inicio 3.
+
+```{r}
+#Comprobamos las categorías
+unique(data$ba)# 3 Categorías
+sum(is.na(data$ba)) #No hay 'NA'
+table(data$ba)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias7 <- data.frame(table(data$ba))
+moda7<- frecuencias7[which.max(frecuencias7$Freq),1]
+
+data$ba[data$ba=='']<-moda7
+table(data$ba)
+```
+Corregidos los valores nulos que residían en la variable por la catergoría más frecuente.
+
+
+* **htn**: Hypertension: se ha cargado correctamente como factor. Debería tener 2 niveles  (yes,no)  , pero obtenemos en un inicio 3.
+
+```{r}
+#Comprobamos las categorías
+unique(data$htn)# 3 Categorías
+sum(is.na(data$htn)) #No hay 'NA'
+table(data$htn)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias8 <- data.frame(table(data$htn))
+moda8<- frecuencias8[which.max(frecuencias8$Freq),1]
+
+data$htn[data$htn=='']<-moda8
+table(data$htn)
+```
+
+Asignamos la categoría más frecuente a los valores nulos o vacíos.
+
+* **dm**: Diabetes Mellitus: se ha cargado correctamente como factor. Debería tener 2 niveles  (yes,no)  , pero obtenemos en un inicio 5.
+
+```{r}
+#Comprobamos las categorías
+unique(data$dm)# 5 Categorías
+sum(is.na(data$dm)) #No hay 'NA'
+table(data$dm)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias9 <- data.frame(table(data$dm))
+moda9<- frecuencias9[which.max(frecuencias9$Freq),1]
+
+data$dm[(data$dm=='')]<-moda9
+data$dm[data$dm=="\tno"]<-'no'
+data$dm[data$dm=="\tyes"]<-'yes'
+data$dm[data$dm==" yes"]<-'yes'
+table(data$dm)
+```
+
+Corregidas las categorías mal nombradas y asignada la categoría de mayor frecuencia a los valores vacíos o nulos.
+
+* **cad**: Coronary Artery Disease: se ha cargado correctamente como factor. Debería tener 2 niveles  (yes,no)  , pero obtenemos en un inicio 4.
+
+```{r}
+#Comprobamos las categorías
+unique(data$cad)# 4 Categorías
+sum(is.na(data$cad)) #No hay 'NA'
+table(data$cad)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias10<- data.frame(table(data$cad))
+moda10<- frecuencias10[which.max(frecuencias10$Freq),1]
+
+data$cad[(data$cad=='')]<-moda10
+data$cad[data$cad=="\tno"]<-'no'
+data$cad[data$cad==" yes"]<-'yes'
+table(data$cad)
+```
+
+Corregidas las categorías mal nombradas y reasignada la categoría más frecuente a los valores nulos o vacíos.
+
+* **appet**: Appetite: se ha cargado correctamente como factor. Debería tener 2 niveles  (good,poor)  , pero obtenemos en un inicio 3.
+
+```{r}
+#Comprobamos las categorías
+unique(data$appet)# 3 Categorías
+sum(is.na(data$appet)) #No hay 'NA'
+table(data$appet)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias11<- data.frame(table(data$appet))
+moda11<- frecuencias11[which.max(frecuencias11$Freq),1]
+
+data$appet[(data$appet=='')]<-moda11
+
+table(data$appet)
+```
+
+Asignamos a los valores vacíos o nulos la categoría de más frecuencia.
+
+* **pe**: Pedal Edema: se ha cargado correctamente como factor. Debería tener 2 niveles  (yes,no)  , pero obtenemos en un inicio 3.
+
+```{r}
+#Comprobamos las categorías
+unique(data$pe)# 3 Categorías
+sum(is.na(data$pe)) #No hay 'NA'
+table(data$pe)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias12<- data.frame(table(data$pe))
+moda12<- frecuencias12[which.max(frecuencias12$Freq),1]
+
+data$pe[(data$pe=='')]<-moda12
+
+table(data$pe)
+```
+
+Asignamos a los valores vacíos o nulos la categoría más frecuente.
+
+* **ane**: Anemia: se ha cargado correctamente como factor. Debería tener 2 niveles  (yes,no)  , pero obtenemos en un inicio 3.
+
+```{r}
+#Comprobamos las categorías
+unique(data$ane)# 3 Categorías
+sum(is.na(data$ane)) #No hay 'NA'
+table(data$ane)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias13<- data.frame(table(data$ane))
+moda13<- frecuencias13[which.max(frecuencias13$Freq),1]
+
+data$ane[(data$ane=='')]<-moda13
+
+table(data$ane)
+```
+
+Asignamos a los valores vacíos o nulos la categoría más frecuente.
+
+* **classification**: Class: se ha cargado correctamente como factor. Debería tener 2 niveles  (ckd,notckd)  , pero obtenemos en un inicio 3.
+
+```{r}
+
+#Comprobamos las categorías
+unique(data$classification)# 3 Categorías
+sum(is.na(data$classification)) #No hay 'NA'
+table(data$classification)
+
+#Sustituimos los valores vacíos por la categoría más frecuente
+
+frecuencias14<- data.frame(table(data$classification))
+moda14<- frecuencias14[which.max(frecuencias14$Freq),1]
+
+data$classification[(data$classification=='')]<-moda14
+data$classification[(data$classification=='ckd\t')]<-'ckd'
+table(data$classification)
+
+```
+
+Corregimos la categoría mal nombrada y asignamos la categoría más frecuente a los valores vacíos (en este caso no teníamos valores vacíos ya que según descripción dataset teníamos 250 de categoría ckd y 150 de categoría notckd)
+
+##### ***3.Dataset resultado. ***
+
+Eliminamos las categorías no usadas de cada atributo y comprobemos si la estructura de los datos, es la adecuada después de la transformación:
+
+```{r}
+data<-droplevels.data.frame(data)
+str(data)
+
+```
+
+**Grabamos a un fichero externo. kidney_disease_clean_2**
+
+```{r}
+write.csv(data, file="kidney_disease_clean_2.csv", row.names = FALSE)
+```
+
